@@ -56,4 +56,3 @@ def load_passwords(username):
 if __name__ == '__main__':
     data = load_passwords('george')
     print(data)
-    print('still running')
