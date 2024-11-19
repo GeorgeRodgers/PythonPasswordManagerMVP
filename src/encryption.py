@@ -9,15 +9,13 @@ So the 'Fernet' module has been imported from the 'cryptography.fernet' library
 def generate_key():
     return Fernet.generate_key() # generated a new key each time the function is called
 
-def save_key(username, key):
-    key_path = f'{username}_key.key' # Create unique path for key based on username
-    with open(key_path, 'wb') as key_file: # 'wb' specifies that data written must be bites
+def save_key(username, key): # Create unique path for key based on username
+    with open(f'{username}_key.key', 'wb') as key_file: # 'wb' specifies that data written must be bites
         key_file.write(key) # Creates the key file
 
-def load_key(username):
-    key_path = f'{username}_key.key' # sets the key path based on the user 
-    if os.path.exists(key_path):
-        with open(key_path, 'rb') as key_file: # 'rb' specifies that data read must be bites
+def load_key(username): # sets the key path based on the user 
+    if os.path.exists(f'{username}_key.key'):
+        with open(f'{username}_key.key', 'rb') as key_file: # 'rb' specifies that data read must be bites
             return key_file.read() # returns the key
     else:
         return None # If key is not found return none
@@ -42,13 +40,4 @@ def decrypt_data(key, encrypted_data):
     return decrypt_data
 
 if __name__ == '__main__':
-    key = generate_key()
-    key2 = generate_key()
-    data = '1'
-    print(data.encode())
-    encrypted_data = encrypt_data(key, data)
-    print((encrypted_data))
-    print(type(encrypted_data))
-    decrypted_data = decrypt_data(key, encrypted_data)
-    print(decrypted_data)
-    print(type(decrypted_data))
+    pass
