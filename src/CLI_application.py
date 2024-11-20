@@ -22,7 +22,6 @@ def main():
                 print('  Please Enter Your Login credentials\n')
                 username = input('  Username:  ')
                 
-                if login(username, master_password)
             
             elif main_menu_choice == 2:
                 
