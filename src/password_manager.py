@@ -2,23 +2,23 @@
 Import os and json modules
 '*' imports all functions from encryption.py and console_styling.py
 """
-import os, json, time, keyboard
+import os, json, pwinput, time, keyboard
 from encryption import *
 from console_styling import *
 
 """
 The program needs to be able to check if a user exists
-This can be done by check for password and key files
+This can be done by check for password file
 """
 def found_user(username):
-    if os.path.exists(f'{username}_passwords.json') & os.path.exists(f'{username}_key.key'):
+    if os.path.exists(f'{username}_passwords.json'):
         return True
     else:
         return False
 
 """
 The password manager requires data to persist between runs of the application
-Create a new user with their own password file and encryption key
+Create a new user with their own password file and store a copy of the hashed master password and a salt
 The first step is checking if the user exists
 If a user exists the function will stop and return 'False'
 The user does not exist the program continues to create a key and save it for the new user
@@ -30,235 +30,205 @@ The second argument is the file the dictionary is being sent to
 The console prints a statement and the function returns true
 """
 
-def create_user(username, password):
+def create_user(username, master_password):
     if found_user(username):
         return False
     
-    key = generate_key()
-    
-    save_key(username, key)
-    
-    encrypted_master_password = encrypt_data(key, password)
+    salt = generate_salt()
+    hashed_master_password = hash_master_password(master_password, salt)
     
     with open(f'{username}_passwords.json', 'w') as file:
-        json.dump({'master_password': encrypted_master_password}, file, indent="")
-    
-    print(GREEN + f'\nUser, {username}, created successfully.' + RESET)
+        json.dump({'user_authentication': {'hashed_master_password': hashed_master_password, 'salt': salt}}, file, indent="")
     return True
 
 """
-For the persistent passwords to be used the password manager requires a function to load them
+In order to authenticated the user and use the stored encrypted password the program need a function to store them
 The file is opened in as read only ('r')
 'json.load(file)' retrieves the json data from the file and it is return by the function
 If the user password file is not found in the try block this will raise and exception
-The except block prints the error to the console and the function returns none
+The except block returns None if the passwords are not loaded
 """
 
 def load_passwords(username):
     try:
         with open(f"{username}_passwords.json", 'r') as file:
             return json.load(file)
-    except FileNotFoundError:
-        print(RED + f'Error: User, {username}, does not exists.' + RESET)
-        return None
+    except:
+        return
+
+"""
+Now the program can load the password file, it can also authenticate a user
+And return that users key generated from the master password and salt
+"""
+
+def login(username, master_password):
+    passwords = load_passwords(username)
+    hashed_master_password = passwords['user_authentication']['hashed_master_password']
+    salt = passwords['user_authentication']['salt']
+    input_password_hash = hash_master_password(master_password, salt)
+    if hashed_master_password == input_password_hash:
+        return master_password_2_key(master_password, salt)
+    else:
+        return False
 
 """
 The application requires a function to save the passwords
-For our file structure to work we need to update the JSON and completely
-write over the original file
+For our file structure to work we need to update the JSON,
+sort it and completely write over the original file
 """
 
 def save_passwords(username, passwords):
-    new_passwords = {'master_password': passwords['master_password']}
-    del passwords['master_password']
+    new_passwords = {'user_authentication': {'hashed_master_password': passwords['user_authentication']['hashed_master_password'], 'salt': passwords['user_authentication']['salt']}}
+    del passwords['user_authentication']
     sorted_passwords = dict(sorted(passwords.items()))
     new_passwords.update(sorted_passwords)
     with open(f'{username}_passwords.json', 'w') as file:
         json.dump(new_passwords, file, indent="")
 
 """
-A function is required to authenticate the user if we are saving or retrieving the passwords
+Before the program saves a username and password for a given service,
+the program need to check if it exists so that it is not modified unless the user specifies they want to do that
 """
-
-def login(username, password):
-    key = load_key(username)
+def check_service(username, service):
     passwords = load_passwords(username)
-    master_password = passwords['master_password']
-    if decrypt_data(key, master_password) == password:
+    if service in passwords:
         return True
     else:
         return False
 
 """
-The is a little more logic to adding the passwords as they need to encrypted
-So an extra function is required for this
+The program needs a function to add the username and passwords
+In order to encrypt the passwords the program requires the key
+This can be generated using the login() function previously defined 
 """
 
-def add_password(username, service, service_username, service_password):
-    if service == '':
+def add_password(username, master_password, service, service_username, service_password):
+    if not found_user(username):
         return
     
-    key = load_key(username)
-    if not key:
-        print(RED + f'Error: User, {username}, encryption key not found.' + RESET)
+    if check_service(username, service):
         return
     
-    encrypted_service_username = encrypt_data(key, service_username)
-    encrypted_service_password = encrypt_data(key, service_password)
-    
-    passwords = load_passwords(username)
-    
-    if passwords is None:
-        print(RED + f'Error: User, {username}, password list not found.' + RESET)
-        return
-    
-    if service in passwords:
-        print(RED + f'\nError: Password for {service} already exists' + RESET)
-        service = input('\nPlease enter an alternative name for this password, or Enter to Return to User Menu:\n')
-        return add_password(username, service, service_username, service_password)
-    
-    passwords.update({service: {
-        'Username': encrypted_service_username,
-        'Password': encrypted_service_password,
-        'Username_len': len(service_username),
-        'Password_len': len(service_password)
-        }})
-    save_passwords(username, passwords)
-    
-    print(GREEN + f'\nUsername and password successfully added for {service}.' + RESET)
-    print('\nPress Enter to continue')
-    next = input()
-
-"""
-A function is now required to retrieve specific passwords
-"""
-
-def retrieve_passwords(username):
-    
-    key = load_key(username)
-    if not key:
-        print(RED + f'Error: User, {username}, encryption key not found.' + RESET)
-        return
-    
-    while True:
-        
-        passwords = load_passwords(username)
-        
-        if passwords is None:
-            print(RED + f'Error: User, {username}, password list not found.' + RESET)
-            return
-        
-        service_list = list(passwords)
-        service_list.append('Delete service from list')
-        service_list.append('Return to User Menu')
-        
-        if len(service_list) > 3:
-            
-            os.system('cls')
-            print('Password Manager\n')
-            
-            for num in range(len(service_list)):
-                if num == 0:
-                    pass
-                else:
-                    print(f'  {num}. {service_list[num]}')
-            try:
-                user_choice = int(input('\nEnter the number of the service you would like to retrieve:  '))
-                if 0 < user_choice < len(service_list)-2:
-                        service = service_list[user_choice]
-                        os.system('cls')
-                        print('Password Manager\n')
-                        print(f'  Service: {service}\n\n    Username: {'*'*passwords[service]['Username_len']}\n    Password: {'*'*passwords[service]['Password_len']}')
-                        print('\nEnter your password to view the username and password\n\nOr Press Enter to return')
-                        password = input('\nPassword:  ')
-                        if login(username, password):
-                            encrypted_username = passwords[service]['Username']
-                            decrypted_username = decrypt_data(key, encrypted_username)
-                            encrypted_password = passwords[service]['Password']
-                            decrypted_password = decrypt_data(key, encrypted_password)
-                            os.system('cls')
-                            print('Password Manager\n')
-                            print(f'  Service: {service}\n\n    Username: {decrypted_username}\n    Password: {decrypted_password}')
-                            print('\nPress Enter to return')
-                            input()
-                elif user_choice == len(service_list)-2:
-                    delete_password(username)
-                elif user_choice == len(service_list)-1:
-                    break
-                else:
-                    print(RED + f'\nError: Invalid choice.' + RESET)
-                    print('\nPress Enter to return')
-                    input()
-            except:
-                print(RED + f'\nError: Invalid choice.' + RESET)
-                print('\nPress Enter to return')
-                input()
-        
-        else:
-            print('\nNo passwords stored for this user')
-            print('\nPress Enter to return')
-            input()
-            break
-
-"""
-I user may also want to delete a password
-"""
-
-def delete_password(username):
-    
-    key = load_key(username)
-    if not key:
-        print(RED + f'Error: User, {username}, encryption key not found.' + RESET)
-        return
-    
-    passwords = load_passwords(username)
-    
-    if passwords is None:
-        print(RED + f'Error: User, {username}, password list not found.' + RESET)
-        return
-    
-    service_list = list(passwords)
-    service_list.append('Return to Password List')
-    
-    if len(service_list) > 2:
-        while True:
-            
-            os.system('cls')
-            print('Password Manager\n')
-            
-            for num in range(len(service_list)):
-                if num == 0:
-                    pass
-                else:
-                    print(f'  {num}. {service_list[num]}')
-            try:
-                user_choice = int(input('\nEnter the number of the service you would like to delete:  '))
-                if 0 < user_choice < len(service_list)-1:
-                        service = service_list[user_choice]
-                        os.system('cls')
-                        print('Password Manager\n')
-                        print(f'  Service: {service}\n\n    Username: {'*'*passwords[service]['Username_len']}\n    Password: {'*'*passwords[service]['Password_len']}')
-                        print('\nEnter your password to delete service from the list\n\nOr Press Enter to return')
-                        password = input('\nPassword:  ')
-                        if login(username, password):
-                            del passwords[service]
-                            save_passwords(username, passwords)
-                            break
-                elif user_choice == len(service_list)-1:
-                    break
-                else:
-                    print(RED + f'\nError: Invalid choice.' + RESET)
-                    print('\nPress Enter to return')
-                    input()
-            except:
-                print(RED + f'\nError: Invalid choice.' + RESET)
-                print('\nPress Enter to return')
-                input()
+    key = login(username, master_password)
+    if key == False:
+        return False
     
     else:
-        print('\nNo passwords stored for this user')
-        print('\nPress Enter to return')
-        input()
+        passwords = load_passwords(username)
+        encrypted_service_username = encrypt_data(key, service_username)
+        encrypted_service_password = encrypt_data(key, service_password)
+        new_password = {service: {'username': encrypted_service_username, 'password':encrypted_service_password}}
+        passwords.update(new_password)
+        save_passwords(username, passwords)
+        return True
+
+"""
+A function is required to list services stored in the passwords file with out the 'user_authentication' data
+"""
+
+def list_services(username):
+    if not found_user(username):
+        return
+    passwords = load_passwords(username)
+    service_list = list(passwords)
+    del service_list[0]
+    return service_list
+
+"""
+A function is required to get a service from a list by it's index
+"""
+
+def get_service(username, num):
+    try:
+        service_list = list_services(username)
+        return service_list[num-1]
+    except:
+        return
+
+"""
+A function is now required to retrieve specific passwords by the position in the list of services
+By default this function will return hidden versions of the username and password
+This can be changed by adding 'False' as the forth parameter
+In the CLI and GUI apps the user should be prompted for the master password again before setting this to true
+These inputs should be evaluated using "pwinput.pwinput(prompt='Enter master password:  ', mask='●')"
+"""
+
+def retrieve_password(username, master_password, num, hidden=True):
+    
+    if not found_user(username):
+        return
+    try:
+        service = get_service(username, num)
+        
+        key = login(username, master_password)
+        if key == False:
+            return False
+        
+        else:
+            
+            passwords = load_passwords(username)
+            encrypted_username = passwords[service]['username']
+            decrypted_username = decrypt_data(key, encrypted_username)
+            encrypted_password = passwords[service]['password']
+            decrypted_password = decrypt_data(key, encrypted_password)
+            if hidden:
+                return ['●'*len(decrypted_username), '●'*len(decrypted_password)]
+            else:
+                return [decrypted_username, decrypted_password]
+    except:
+        return
+
+"""
+A user may also want to delete a username/password combination for a service
+Again in the CLI and GUI apps the user should be prompted confirm the master password
+before the program can delete a service
+"""
+
+def delete_password(username, confirm_password, num):
+    if not found_user(username):
+        return
+    try:
+        service = get_service(username, num)
+        
+        key = login(username, confirm_password)
+        if key == False:
+            return False
+        
+        else:
+            
+            passwords = load_passwords(username)
+            del passwords[service]
+            save_passwords(username, passwords)
+            
+    except:
+        return
+
+"""
+Instead of deleting the service, the user may want to just update it
+The function is similar to 'add_password()' except it checks the password already exists
+Again in the CLI and GUI apps the user should be prompted confirm the master password
+before the program can update a service
+"""
+
+def update_password(username, master_password, service, service_username, service_password):
+    if not found_user(username):
+        return
+    
+    if not check_service(username, service):
+        return
+    
+    key = login(username, master_password)
+    if key == False:
+        return False
+    
+    else:
+        passwords = load_passwords(username)
+        encrypted_service_username = encrypt_data(key, service_username)
+        encrypted_service_password = encrypt_data(key, service_password)
+        new_password = {service: {'username': encrypted_service_username, 'password':encrypted_service_password}}
+        passwords.update(new_password)
+        save_passwords(username, passwords)
+        return True
 
 if __name__ == '__main__':
-    retrieve_passwords('George')
+    add_password('George', 'password', 'A', 'updated_username', 'updated_password')

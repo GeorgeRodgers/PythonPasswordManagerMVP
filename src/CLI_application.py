@@ -12,92 +12,77 @@ def main():
         print('    2. Create New User')
         print('    3. Exit Password Manager')
         try:
-            main_menu_choice = int(input('\nPlease select an option from the menu above:  '))
+            
+            main_menu_choice = int(input('\nPlease Select an Option from the Menu Above:  '))
             
             if main_menu_choice == 1:
                 
                 os.system('cls')
                 print('Password Manager\n')
-                username = input('Please enter your Password Manager Username:  ')
-                if not found_user(username):
+                print('  Please Enter Your Login credentials\n')
+                username = input('  Username:  ')
+                
+                if login(username, master_password)
+            
+            elif main_menu_choice == 2:
+                
+                user_created = False
+                
+                while not user_created:
                     
-                    print(RED + '\nUser does not exists' + RESET + '\n\nPress Enter to continue')
-                    next = input()
+                    os.system('cls')
+                    print('Password Manager\n')
+                    print(('  Please Enter a Username for the Password Manager\n\n  Or Press Enter to Return to the Main Menu\n'))
+                    username = input('  Username:  ')
                     
-                else:
+                    if username == '':
+                        
+                        break
                     
-                    password = input('\nPlease enter your Password Manager Password:  ')
+                    elif found_user(username):
+                        
+                        print(RED + '\n  Sorry this username is taken' + RESET + '\n\n  Press Enter to Continue')
+                        input()
                     
-                    if login(username, password):
+                    else:
                         
                         while True:
+                            
                             os.system('cls')
                             print('Password Manager\n')
-                            print(GREEN + f'{username} logged in successfully\n' + RESET)
-                            print('  Options:\n')
-                            print('    1. Get Password')
-                            print('    2. Add Password')
-                            print('    3. Logout')
-                            try:
-                                user_menu_choice = int(input('\nPlease select an option from the menu above:  '))
+                            print(('  Please Enter a Master Password for the Password Manager\n\n  Or Press Enter to Return to the Main Menu\n'))
+                            master_password = pwinput.pwinput(prompt='  Password:  ', mask='●')
+                            
+                            if master_password == '':
                                 
-                                if user_menu_choice == 1:
-                                    os.system('cls')
-                                    print('Password Manager')
-                                    retrieve_passwords(username)
+                                break
+                            
+                            else:
                                 
-                                elif user_menu_choice == 2:
-                                    os.system('cls')
-                                    print('Password Manager')
-                                    service = input('\nPlease enter the name of the Service you want to save a password for:  ')
-                                    service_username = input(f'\nWhat username do you use for {service}:  ')
-                                    service_password = input(f'\nWhat password do you use for {service}:  ')
+                                os.system('cls')
+                                print('Password Manager\n')
+                                print(('  Please confirm Master Password for the Password Manager\n'))
+                                confirm_master_password = pwinput.pwinput(prompt='  Password:  ', mask='●')
+                                
+                                if master_password == confirm_master_password:
                                     
-                                    add_password(username, service, service_username, service_password)
-                                
-                                elif user_menu_choice == 3:
+                                    create_user(username, master_password)
+                                    os.system('cls')
+                                    print('Password Manager\n')
+                                    print((GREEN + f'  New user, {username}, created successfully'+ RESET + '\n\n  Press Enter to Return to the Main Menu\n'))
+                                    input()
+                                    user_created = True
                                     break
                                 
                                 else:
                                     
-                                    print(RED + '\nError: option not found' + RESET)
-                                    print('\nPress Enter to return')
+                                    print((RED + f'  Passwords do not match' + RESET + '\n\n  Press Enter to try again\n'))
                                     input()
-                                
-                            except:
-                                
-                                print(RED + '\nError: invalid input' + RESET)
-                                print('\nPress Enter to return')
-                                input()
-                        
-                    else:
-                        
-                        print(RED + '\nPassword Incorrect\n' + RESET + '\nPress Enter to continue')
-                        input()
-                
-            elif main_menu_choice == 2:
-                
-                os.system('cls')
-                print('Password Manager\n')
-                print('Create New User\n')
-                username = input('Please enter a Username for the Password Manager:  ')
-                
-                if found_user(username):
-                    
-                    print(RED + '\nSorry this user name is taken' + RESET)
-                    print('\nPress Enter Return to Main Menu')
-                    input()
-                
-                else:
-                    
-                    password = input('\nPlease enter a Password for the Password Manager:  ')
-                    create_user(username, password)
-                    print('\nPress Enter Return to Main Menu')
-                    input()
                 
             elif main_menu_choice == 3:
                 
-                print('\nExiting application, goodbye')
+                print('\nExiting application', end='')
+                time.sleep(0.5)
                 for i in range(3):
                     print('.', end='')
                     time.sleep(0.5)
@@ -108,7 +93,7 @@ def main():
                 
                 print(RED + '\nError: invalid input, press Enter to continue' + RESET)
                 input()
-                
+        
         except:
             
             print(RED + '\nError: invalid input, press Enter to continue' + RESET)

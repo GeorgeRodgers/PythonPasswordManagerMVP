@@ -1,27 +1,42 @@
 from cryptography.fernet import Fernet
-import os
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import json, hashlib, getpass, os, pyperclip, sys, base64
 
 """
-Each user needs a unique and complex key for the encryption/decryption functions
-This application uses 'Fernet Symmetric Encryption'
-So the 'Fernet' module has been imported from the 'cryptography.fernet' library
+A function is required to hash the master password for storage
+If the master password is openly stored it is very easy break the encryption
+It is extremely difficult (near impossible) to unhash the master password,
+but it would be possible to hash an input and compare this with the stored hashed master password
+Because if two user use the same password it sensible to add a random salt to the master password
+This can be openly stored
 """
-def generate_key():
-    return Fernet.generate_key() # generated a new key each time the function is called
 
-def save_key(username, key): # Create unique path for key based on username
-    with open(f'{username}_key.key', 'wb') as key_file: # 'wb' specifies that data written must be bites
-        key_file.write(key) # Creates the key file
+def generate_salt():
+    return os.urandom(16).hex()
 
-def load_key(username): # sets the key path based on the user 
-    if os.path.exists(f'{username}_key.key'):
-        with open(f'{username}_key.key', 'rb') as key_file: # 'rb' specifies that data read must be bites
-            return key_file.read() # returns the key
-    else:
-        return None # If key is not found return none
+def hash_master_password(master_password, salt):
+    slated_master_password_in_bytes = salt + master_password
+    sha3_512 = hashlib.sha3_512()
+    sha3_512.update(slated_master_password_in_bytes.encode())
+    return sha3_512.hexdigest()
 
 """
-User Passwords can now be encrypted/decrypted using the created and stored keys
+A function is required to convert a master_password into a key using a hashing function
+SHA-3 hasn't been broken yet and is unlikely to be broken anytime soon
+"""
+def master_password_2_key(master_password, salt):
+    kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA3_512(),
+    length=32,
+    salt = salt.encode(),
+    iterations=480000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(master_password.encode()))
+    return key
+
+"""
+User Passwords can now be encrypted/decrypted using key generated from the master password and a salt
 'f = Fernet(key)' Creates instance of the Fernet class that is specific to the key
 Calling the '.encrypt()' or '.decrypt()' method on the Fernet instance encrypts/decrypts the data
 The data must be in the bytes format for these methods to work
@@ -40,4 +55,16 @@ def decrypt_data(key, encrypted_data):
     return decrypt_data
 
 if __name__ == '__main__':
-    pass
+    salt1 = generate_salt()
+    salt2 = generate_salt()
+    print(hash_master_password('P4$$w0rD', salt1))
+    print(hash_master_password('password', salt1))
+    print(hash_master_password('password', salt2))
+    print(hash_master_password('password', salt2))
+    key = master_password_2_key('password', salt1)
+    data = 'this is a secret message'
+    encrypted_data = encrypt_data(key, data)
+    print(encrypted_data)
+    decrypted_data = decrypt_data(key, encrypted_data) 
+    print(decrypted_data)
+    print(salt1)
