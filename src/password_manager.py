@@ -2,7 +2,7 @@
 Import os and json modules
 '*' imports all functions from encryption.py and console_styling.py
 """
-import os, json, pwinput, time, keyboard
+import os, json
 from encryption import *
 from console_styling import *
 
@@ -25,7 +25,7 @@ The user does not exist the program continues to create a key and save it for th
 To create the passwords file it is opened in write mode ('w') as file
 Opening as file ensures it is closed after the operation
 'json.dump()' adds empty dictionary we have passed to the file as an argument
-The dictionary is formatted to list service with the username/email and password 
+The dictionary is formatted to list account with the username/email and password 
 The second argument is the file the dictionary is being sent to
 The console prints a statement and the function returns true
 """
@@ -86,12 +86,12 @@ def save_passwords(username, passwords):
         json.dump(new_passwords, file, indent="")
 
 """
-Before the program saves a username and password for a given service,
+Before the program saves a username and password for a given account,
 the program need to check if it exists so that it is not modified unless the user specifies they want to do that
 """
-def check_service(username, service):
+def check_account(username, account):
     passwords = load_passwords(username)
-    if service in passwords:
+    if account in passwords:
         return True
     else:
         return False
@@ -102,11 +102,11 @@ In order to encrypt the passwords the program requires the key
 This can be generated using the login() function previously defined 
 """
 
-def add_password(username, master_password, service, service_username, service_password):
+def add_password(username, master_password, account, account_username, account_password):
     if not found_user(username):
         return
     
-    if check_service(username, service):
+    if check_account(username, account):
         return
     
     key = login(username, master_password)
@@ -115,50 +115,49 @@ def add_password(username, master_password, service, service_username, service_p
     
     else:
         passwords = load_passwords(username)
-        encrypted_service_username = encrypt_data(key, service_username)
-        encrypted_service_password = encrypt_data(key, service_password)
-        new_password = {service: {'username': encrypted_service_username, 'password':encrypted_service_password}}
+        encrypted_account_username = encrypt_data(key, account_username)
+        encrypted_account_password = encrypt_data(key, account_password)
+        new_password = {account: {'username': encrypted_account_username, 'password':encrypted_account_password}}
         passwords.update(new_password)
         save_passwords(username, passwords)
         return True
 
 """
-A function is required to list services stored in the passwords file with out the 'user_authentication' data
+A function is required to list accounts stored in the passwords file with out the 'user_authentication' data
 """
 
-def list_services(username):
+def list_accounts(username):
     if not found_user(username):
         return
     passwords = load_passwords(username)
-    service_list = list(passwords)
-    del service_list[0]
-    return service_list
+    account_list = list(passwords)
+    del account_list[0]
+    return account_list
 
 """
-A function is required to get a service from a list by it's index
+A function is required to get a account from a list by it's index
 """
 
-def get_service(username, num):
+def get_account(username, num):
     try:
-        service_list = list_services(username)
-        return service_list[num-1]
+        account_list = list_accounts(username)
+        return account_list[num-1]
     except:
         return
 
 """
-A function is now required to retrieve specific passwords by the position in the list of services
-By default this function will return hidden versions of the username and password
+A function is now required to retrieve specific passwords by the position in the list of accounts
+By default this function will return the username and a hidden version password
 This can be changed by adding 'False' as the forth parameter
-In the CLI and GUI apps the user should be prompted for the master password again before setting this to true
 These inputs should be evaluated using "pwinput.pwinput(prompt='Enter master password:  ', mask='●')"
 """
 
-def retrieve_password(username, master_password, num, hidden=True):
+def retrieve_account_details(username, master_password, num):
     
     if not found_user(username):
         return
     try:
-        service = get_service(username, num)
+        account = get_account(username, num)
         
         key = login(username, master_password)
         if key == False:
@@ -167,28 +166,25 @@ def retrieve_password(username, master_password, num, hidden=True):
         else:
             
             passwords = load_passwords(username)
-            encrypted_username = passwords[service]['username']
+            encrypted_username = passwords[account]['username']
             decrypted_username = decrypt_data(key, encrypted_username)
-            encrypted_password = passwords[service]['password']
+            encrypted_password = passwords[account]['password']
             decrypted_password = decrypt_data(key, encrypted_password)
-            if hidden:
-                return ['●'*len(decrypted_username), '●'*len(decrypted_password)]
-            else:
-                return [decrypted_username, decrypted_password]
+            return [decrypted_username, decrypted_password]
     except:
         return
 
 """
-A user may also want to delete a username/password combination for a service
+A user may also want to delete a username/password combination for a account
 Again in the CLI and GUI apps the user should be prompted confirm the master password
-before the program can delete a service
+before the program can delete a account
 """
 
 def delete_password(username, confirm_password, num):
     if not found_user(username):
         return
     try:
-        service = get_service(username, num)
+        account = get_account(username, num)
         
         key = login(username, confirm_password)
         if key == False:
@@ -197,24 +193,24 @@ def delete_password(username, confirm_password, num):
         else:
             
             passwords = load_passwords(username)
-            del passwords[service]
+            del passwords[account]
             save_passwords(username, passwords)
             
     except:
         return
 
 """
-Instead of deleting the service, the user may want to just update it
+Instead of deleting the account, the user may want to just update it
 The function is similar to 'add_password()' except it checks the password already exists
 Again in the CLI and GUI apps the user should be prompted confirm the master password
-before the program can update a service
+before the program can update a account
 """
 
-def update_password(username, master_password, service, service_username, service_password):
+def update_password(username, master_password, account, account_username, account_password):
     if not found_user(username):
         return
     
-    if not check_service(username, service):
+    if not check_account(username, account):
         return
     
     key = login(username, master_password)
@@ -223,12 +219,12 @@ def update_password(username, master_password, service, service_username, servic
     
     else:
         passwords = load_passwords(username)
-        encrypted_service_username = encrypt_data(key, service_username)
-        encrypted_service_password = encrypt_data(key, service_password)
-        new_password = {service: {'username': encrypted_service_username, 'password':encrypted_service_password}}
+        encrypted_account_username = encrypt_data(key, account_username)
+        encrypted_account_password = encrypt_data(key, account_password)
+        new_password = {account: {'username': encrypted_account_username, 'password':encrypted_account_password}}
         passwords.update(new_password)
         save_passwords(username, passwords)
         return True
 
 if __name__ == '__main__':
-    add_password('George', 'password', 'A', 'updated_username', 'updated_password')
+    add_password('george', 'password', 'Amazon', 'updated_username', 'updated_password')

@@ -1,2 +1,2 @@
-
-    print(get_services('george', 5))
+for i in range(len(accounts)):
+                                    #     print(f'    {i}. {get_account(username, i)}')

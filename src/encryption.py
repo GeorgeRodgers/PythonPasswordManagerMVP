@@ -1,7 +1,7 @@
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import json, hashlib, getpass, os, pyperclip, sys, base64
+import hashlib, os, pyperclip, sys, base64
 
 """
 A function is required to hash the master password for storage
