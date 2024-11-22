@@ -2,7 +2,7 @@
 Import os and json modules
 '*' imports all functions from encryption.py and console_styling.py
 """
-import os, json
+import os, json, random, string
 from encryption import *
 from console_styling import *
 
@@ -226,5 +226,64 @@ def update_password(username, master_password, account, account_username, accoun
         save_passwords(username, passwords)
         return True
 
+"""
+A function is required if the user wants to delete their password manager account
+"""
+def delete_user(username):
+    if os.path.exists(f'{username}_passwords.json'):
+        os.remove(f'{username}_passwords.json')
+        return True
+    else:
+        return False
+
+"""
+A function to suggest a password could also be useful to the end user
+"""
+
+def generate_password(
+                    password_length = 12,
+                    uppercase_letters = True,
+                    uppercase_letters_at_start_and_end = True,
+                    number = True,
+                    number_at_start_and_end = True,
+                    special_characters = True,
+                    special_characters_at_start_and_end = True
+                    ):
+    
+    # ascii letters added 3 times to increase frequency
+    main_character_list = 2*string.ascii_lowercase
+    
+    if uppercase_letters:
+        main_character_list += 2*string.ascii_uppercase
+    if number:
+        main_character_list += string.digits
+    if special_characters:
+        main_character_list += string.punctuation
+    
+    start_and_end_character_list = 2*string.ascii_lowercase
+    
+    if uppercase_letters_at_start_and_end:
+        start_and_end_character_list += 2*string.ascii_uppercase
+    if number_at_start_and_end:
+        start_and_end_character_list += string.digits
+    if special_characters_at_start_and_end:
+        start_and_end_character_list += string.punctuation
+    
+    password =''
+    
+    for letter in range(password_length):
+        if (letter == 0) | (letter == password_length-1):
+            password += random.choice(start_and_end_character_list)
+        else:
+            password += random.choice(main_character_list)
+    
+    return password
+
 if __name__ == '__main__':
-    add_password('george', 'password', 'Amazon', 'updated_username', 'updated_password')
+    print(generate_password(password_length = 15,
+                    uppercase_letters = True,
+                    uppercase_letters_at_start_and_end = False,
+                    number = True,
+                    number_at_start_and_end = False,
+                    special_characters = True,
+                    special_characters_at_start_and_end = False))

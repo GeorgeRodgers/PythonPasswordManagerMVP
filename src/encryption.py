@@ -16,9 +16,9 @@ def generate_salt():
     return os.urandom(16).hex()
 
 def hash_master_password(master_password, salt):
-    slated_master_password_in_bytes = salt + master_password
+    slated_master_password = salt + master_password
     sha3_512 = hashlib.sha3_512()
-    sha3_512.update(slated_master_password_in_bytes.encode())
+    sha3_512.update(slated_master_password.encode())
     return sha3_512.hexdigest()
 
 """

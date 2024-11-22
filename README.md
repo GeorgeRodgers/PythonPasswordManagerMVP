@@ -68,6 +68,7 @@ python CLI_application.py
 - Key Functions:
   - `generate_salt()`: Generates a unique salt.
   - `hash_master_password()`: Hashes the master password.
+  - `master_password_2_key()`: Generates a encryption key using the master password and salt.
   - `encrypt_data()` / `decrypt_data()`: Encrypts and decrypts account credentials.
 
 ### 3. `password_manager.py`
@@ -75,6 +76,7 @@ python CLI_application.py
 - Key Functions:
   - `found_user()`: Checks if a user exists.
   - `create_user()`: Registers a new user with a hashed master password.
+  - `login()`: Retrieves the hashed master password and salt for the user, the hashed input password is compared with the hashed master. If they match the master password and salt are used to generate a key for the encryption and decryption. 
   - `add_password()` / `update_password()` / `delete_password()`: Manage account credentials.
   - `list_accounts()` / `retrieve_account_details()`: Retrieve stored account information.
 

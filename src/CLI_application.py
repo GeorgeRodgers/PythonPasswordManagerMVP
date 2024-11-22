@@ -78,7 +78,8 @@ def main():
                                         print(f'    {i+1}. {get_account(username, i+1)}')
                                     
                                     print(f'    {len(accounts)+1}. Add account')
-                                    print(f'    {len(accounts)+2}. Logout')
+                                    print(f'    {len(accounts)+2}. Delete Password Manager Account')
+                                    print(f'    {len(accounts)+3}. Logout')
                                     first_loop = False
                                     
                                     try:
@@ -253,6 +254,17 @@ def main():
                                                     break
                                         
                                         elif user_menu_choice == len(accounts)+2:
+                                            
+                                            confirm_master_password = pwinput.pwinput(prompt='\n  Confirm Password:  ', mask='●')
+                                            
+                                            if master_password == confirm_master_password:
+                                                
+                                                delete_user(username)
+                                                
+                                            attempts = 3
+                                            break
+                                        
+                                        elif user_menu_choice == len(accounts)+3:
                                             
                                             attempts = 3
                                             break
