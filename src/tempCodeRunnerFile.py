@@ -1,1 +1,1 @@
-create_register_new_user_frame
+tree.column("Account", anchor='center', stretch=tk.NO, width=150)
