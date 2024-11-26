@@ -1,14 +1,15 @@
 from password_manager import *
 import tkinter as tk
-from tkinter.ttk import Treeview, Button, Label, Entry, Scrollbar, Style
-import os, time, pwinput, pyperclip
+from tkinter.ttk import Treeview, Button, Label, Entry
+from PIL import Image, ImageTk
+import pyperclip
 
 class PasswordManagerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Password Manager")
         self.root.geometry("350x400")
-        self.root.minsize(350, 400) 
+        self.root.minsize(350, 400)
         self.username = None
         self.create_login_frame()
 
