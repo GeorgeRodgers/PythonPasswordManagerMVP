@@ -211,7 +211,7 @@ def update_password(username, master_password, account, account_username, accoun
         return
     
     if not check_account(username, account):
-        return
+        return account
     
     key = login(username, master_password)
     if key == False:
@@ -243,11 +243,11 @@ A function to suggest a password could also be useful to the end user
 def generate_password(
                     password_length = 12,
                     uppercase_letters = True,
-                    uppercase_letters_at_start_and_end = True,
+                    uppercase_letters_at_start_and_end = False,
                     number = True,
-                    number_at_start_and_end = True,
+                    number_at_start_and_end = False,
                     special_characters = True,
-                    special_characters_at_start_and_end = True
+                    special_characters_at_start_and_end = False
                     ):
     
     # ascii letters added 3 times to increase frequency
@@ -280,10 +280,4 @@ def generate_password(
     return password
 
 if __name__ == '__main__':
-    print(generate_password(password_length = 15,
-                    uppercase_letters = True,
-                    uppercase_letters_at_start_and_end = False,
-                    number = True,
-                    number_at_start_and_end = False,
-                    special_characters = True,
-                    special_characters_at_start_and_end = False))
+    print(generate_password())
