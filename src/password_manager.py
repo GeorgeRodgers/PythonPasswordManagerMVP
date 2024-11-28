@@ -3,8 +3,8 @@ Import os and json modules
 '*' imports all functions from encryption.py and console_styling.py
 """
 import os, json, random, string
-from encryption import *
-from console_styling import *
+from src.encryption import *
+from src.console_styling import *
 
 """
 The program needs to be able to check if a user exists
